@@ -72,7 +72,7 @@ class GroundStation:
         alt = str(self.altitude)
         days = str(self.prediction_span)
         min_elevation = str(self.min_elevation)
-        search_range = '70'
+        search_range = '85'
         category = str(self.category)
         request_url_radio = "/".join((n2yo_api_url, "radiopasses", sat_id, lat, lng, alt, days, min_elevation,
                                       "&apiKey=%s" % api_key))
@@ -91,13 +91,12 @@ class GroundStation:
         if self.mode == ABOVE:
             logger.warning("Can not calculate transits while in %s mode." % ABOVE)
             return
-        if self.data.get(ABOVE):
+        if isinstance(self.data.get(ABOVE), list):
             if not len(self.data[ABOVE]):
                 logger.warning("No satellites overhead.")
                 return
             if not self.select_satellite():
                 return
-
         for sat_pass in self.data['passes']:
             start_utc = sat_pass['startUTC']
             end_utc = sat_pass['endUTC']
@@ -121,6 +120,7 @@ class GroundStation:
     def select_satellite(self):
         response = None
         sat_count = self.data['info']['satcount']
+        pprint(self.data)
         while response != 'exit':
             if sat_count - 1 > 0:
                 print("Select a satellite between 0 -", sat_count - 1)
@@ -133,13 +133,12 @@ class GroundStation:
                 print(sat_dat)
                 print("Select satellite y/n?")
                 response = str(input())
-                print(response.lower() == "y", response)
                 if response.lower() == "y":
                     self.mode = RADIO
                     self.get_satellite_data(sat_dat["satid"])
                     return True
-                else:
-                    self.select_satellite()
+            else:
+                print("Invalid selection >>> %s" % response)
         return False
 
 
