@@ -1,6 +1,5 @@
 import main
 import os
-import urllib
 src = os.path.dirname(__file__)
 
 # sat_id = 25338  # NOAA 15

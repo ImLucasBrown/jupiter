@@ -69,7 +69,7 @@ class GroundStation:
             sat_id = str(sat_id)
         else:
             sat_id = '0'
-        self.sat_id = str(sat_id)
+        self.sat_id = int(sat_id)
         position_time = str(position_time)
         lat = str(self.latitude)
         lng = str(self.longitude)
@@ -82,17 +82,19 @@ class GroundStation:
                                       "&apiKey=%s" % api_key))
         request_url_above = "/".join((n2yo_api_url, "above", lat, lng, alt, search_range, category,
                                       "&apiKey=%s" % api_key))
-        request_url_positions = "/".join((n2yo_api_url, "positions", self.sat_id, lat, lng, alt,
+        request_url_positions = "/".join((n2yo_api_url, "positions", sat_id, lat, lng, alt,
                                           position_time, "&apiKey=%s" % api_key))
         request_url = request_url_radio
         if self.mode == ABOVE:
             request_url = request_url_above
         elif self.mode == POSITION:
             request_url = request_url_positions
+        logger.warning("API request sent...")
         with urllib.request.urlopen(request_url) as response:
             data = eval(response.read())
             # pprint(data)
             self.data = data
+            logger.warning("API request success!")
             return self.data
 
     def find_transit(self):
@@ -152,15 +154,22 @@ class GroundStation:
         Requests the position of a satellite for the duration of a transit. Updates are stored in a list.
         '''
         if self.sat_id >= 0:
+            self.mode = POSITION
             self.get_satellite_data(self.sat_id, position_time=pass_end_time - current_utc())
+            pprint(self.data)
+            dump = list()
             for pos_data in self.data["positions"]:
                 # TODO: Validate against timestamp
                 azimuth = pos_data["azimuth"]
                 elevation = pos_data["elevation"]
                 time_until_end = pass_end_time - current_utc()
-                print(datetime.timedelta(seconds=time_until_end), "a:%s | e:%s" % (azimuth, elevation))
+                print(datetime.timedelta(seconds=time_until_end), "\t\t", "a:%s | e:%s" % (azimuth, elevation))
+                dump.append([azimuth, elevation])
                 time.sleep(1)
             print("Pass has ended")
+            f = open("E:/Projects/GitHub/jupiter/dump.txt", "w")
+            f.write(str(dump))
+            f.close()
 
 
 def current_utc():
